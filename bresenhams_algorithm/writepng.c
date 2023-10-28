@@ -112,7 +112,6 @@ void write_png_file(char* file_name)
         fclose(fp);
 }
 
-
 void process_file(void)
 {
 	for (y=0; y<height; y++) {
@@ -126,6 +125,105 @@ void process_file(void)
 
 }
 
+void write_pixel(int x, int y, png_byte cr, png_byte cg, png_byte cb) {
+    png_byte* row = row_pointers[y];
+    png_byte* ptr = &(row[x*3]);
+    ptr[0] = cr;
+    ptr[1] = cg;
+    ptr[2] = cb;
+}
+
+void write_pixel8(int x, int y, png_byte cr, png_byte cg, png_byte cb) {
+    write_pixel(x, y, cr, cg, cb);
+    write_pixel(y, x, cr, cg, cb);
+    write_pixel(x, -y, cr, cg, cb);
+    write_pixel(y, -x, cr, cg, cb);
+    write_pixel(-x, y, cr, cg, cb);
+    write_pixel(-y, x, cr, cg, cb);
+    write_pixel(-x, -y, cr, cg, cb);
+    write_pixel(-y, -x, cr, cg, cb);
+}
+
+void circle(int R, png_byte cr, png_byte cg, png_byte cb) {
+    int i, j, f;
+    i = 0;
+    j = R;
+    f = 5 - 4 * R;
+    write_pixel8(i, j, cr, cg, cb);
+    
+    while (i < j) {
+        if (f >= 0) {
+            f = f + 8 * i - 8 * j + 20;
+            j = j - 1;
+        } else {
+            f = f + 8 * i + 12;
+            i = i + 1;
+        }
+        write_pixel8(i, j, cr, cg, cb);
+    }
+}
+
+void bresenham(int i1, int j1, int i2, int j2, png_byte cr, png_byte cg, png_byte cb) {
+    int m, b, P, i, j;
+
+    if(i2 > i1 && j2 >= j1 && j2 - j1 <= i2 - i1) {
+        printf("przypadek 1\n");
+        m = 2 * (j2 - j1);
+        b = m - (i2 - i1);
+        write_pixel(i1, j1, cr, cg, cb);
+        j = j1;
+        for(i = i1 + 1; i <= i2; i++) {
+            if(b >= 0) {
+                j += 1;
+                b -= 2 * (i2 - i1);
+            }
+            b += m;
+            write_pixel(i, j, cr, cg, cb);
+        }
+    } else if(j2 > j1 && i2 >= i1 && i2 - i1 <= j2 - j1) {
+        printf("przypadek 2\n");
+        m = 2 * (i2 - i1);
+        b = m - (j2 - j1);
+        write_pixel(i1, j1, cr, cg, cb);
+        i = i1;
+        for(j = j1 + 1; j <= j2; j++) {
+            if(b >= 0) {
+                i += 1;
+                b -= 2 * (j2 - j1);
+            }
+            b += m;
+            write_pixel(i, j, cr, cg, cb);
+        }
+    } else if(i1 > i2 && j2 > j1 && j2 - j1 >= i1 - i2) {
+        printf("przypadek 3\n");
+        m = 2 * (i1 - i2);
+        b = m - (j2 - j1);
+        write_pixel(i1, j1, cr, cg, cb);
+        i = i1;
+        for(j = j1 + 1; j <= j2; j++) {
+            if(b >= 0) {
+                i -= 1;
+                b -= 2 * (j2 - j1);
+            }
+            b += m;
+            write_pixel(i, j, cr, cg, cb);
+        }
+    } else if(i1 > i2 && j2 >= j1 && j2 - j1 <= i1 - i2) {
+        printf("przypadek 4\n");
+        m = 2 * (j2 - j1);
+        b = m - (i1 - i2);
+        write_pixel(i1, j1, cr, cg, cb);
+        j = j1;
+        for(i = i1 - 1; i >= i2; i--) {
+            if(b >= 0) {
+                j += 1;
+                b -= 2 * (i1 - i2);
+            }
+            b += m;
+            write_pixel(i, j, cr, cg, cb);
+        }
+    }
+}
 
 int main(int argc, char **argv)
 {
