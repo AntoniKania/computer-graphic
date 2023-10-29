@@ -20,6 +20,9 @@
 #define HEIGHT 600
 #define COLOR_TYPE PNG_COLOR_TYPE_RGB
 #define BIT_DEPTH 8
+#define MARGIN_LEFT 50
+#define MARGIN_TOP 80
+#define SCALE 2
 
 
 void abort_(const char * s, ...)
@@ -40,7 +43,6 @@ png_byte bit_depth;
 
 png_structp png_ptr;
 png_infop info_ptr;
-int number_of_passes;
 png_bytep * row_pointers;
 
 void create_png_file()
@@ -158,15 +160,15 @@ void write_pixel(int x, int y, png_byte cr, png_byte cg, png_byte cb) {
     ptr[2] = cb;
 }
 
-void write_pixel8(int x, int y, png_byte cr, png_byte cg, png_byte cb) {
-    write_pixel(x, y, cr, cg, cb);
-    write_pixel(y, x, cr, cg, cb);
-    write_pixel(x, -y, cr, cg, cb);
-    write_pixel(y, -x, cr, cg, cb);
-    write_pixel(-x, y, cr, cg, cb);
-    write_pixel(-y, x, cr, cg, cb);
-    write_pixel(-x, -y, cr, cg, cb);
-    write_pixel(-y, -x, cr, cg, cb);
+void write_pixel8(int m1, int m2, int x, int y, png_byte cr, png_byte cg, png_byte cb) {
+    write_pixel(m1+x, m2+y, cr, cg, cb);
+    write_pixel(m1+y, m2+x, cr, cg, cb);
+    write_pixel(m1+x, m2-y, cr, cg, cb);
+    write_pixel(m1+y, m2-x, cr, cg, cb);
+    write_pixel(m1-x, m2+y, cr, cg, cb);
+    write_pixel(m1-y, m2+x, cr, cg, cb);
+    write_pixel(m1-x, m2-y, cr, cg, cb);
+    write_pixel(m1-y, m2-x, cr, cg, cb);
 }
 
 void bresenham(int i1, int j1, int i2, int j2, png_byte cr, png_byte cg, png_byte cb) {
@@ -295,8 +297,8 @@ void process_file(const char* filename) {
         switch (cmd) {
             case 'M':
                 sscanf(token + 1, "%d %d", &x, &y);
-//                x += 22;
-//                y += 50;
+                x = (x + MARGIN_LEFT) * SCALE;
+                y = (y + MARGIN_TOP) * SCALE;
 
                 start_x = x;
                 start_y = y;
@@ -307,8 +309,8 @@ void process_file(const char* filename) {
 
             case 'L':
                 sscanf(token + 1, "%d %d", &x, &y);
-//                x += 22;
-//                y += 50;
+                x = (x + MARGIN_LEFT) * SCALE;
+                y = (y + MARGIN_TOP) * SCALE;
 
                 process_line_segment(prev_x, prev_y, x, y);
 
@@ -328,7 +330,7 @@ void circle(int R, png_byte cr, png_byte cg, png_byte cb) {
     i = 0;
     j = R;
     f = 5 - 4 * R;
-    write_pixel8(i, j, cr, cg, cb);
+    write_pixel8(WIDTH/2, HEIGHT/2, i, 50, cr, cg, cb);
 
     while (i < j) {
         if (f > 0) {
@@ -338,15 +340,15 @@ void circle(int R, png_byte cr, png_byte cg, png_byte cb) {
             f = f + 8 * i + 12;
         }
         i = i + 1;
-        write_pixel8(i, j, cr, cg, cb);
+        write_pixel8(WIDTH/2, HEIGHT/2, i, j, cr, cg, cb);
     }
 }
 
 int main(int argc, char **argv)
 {
 	create_png_file();
-    circle(200, 155, 0, 0);
-//	process_file("initials.svg");
+    circle(250, 155, 0, 0);
+	process_file("initials.svg");
 	write_png_file(OUT_FILE);
 
     return 0;
