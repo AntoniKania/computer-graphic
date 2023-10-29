@@ -8,9 +8,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 #define PNG_DEBUG 3
 #include <png.h>
+#include <ctype.h>
 
 
 #define OUT_FILE "initials.png"
@@ -51,8 +53,6 @@ void create_png_file()
 	row_pointers = (png_bytep*) malloc(sizeof(png_bytep) * height);
 	for (y=0; y<height; y++)
 		row_pointers[y] = (png_byte*) malloc(width*bit_depth*3);
-
-
 }
 
 
@@ -112,17 +112,42 @@ void write_png_file(char* file_name)
         fclose(fp);
 }
 
-void process_file(void)
-{
-	for (y=0; y<height; y++) {
-		png_byte* row = row_pointers[y];
-		for (x=0; x<width; x++) {
-			png_byte* ptr = &(row[x*3]);
-			ptr[0] = 0;
-			ptr[1] = ptr[2] = 255;
-		}
-	}
+int is_angle_greater_than_180(int i1, int i2) {
+    int di = i2 - i1;
 
+    return di < 0;
+}
+
+char* read_file_content(const char* filename) {
+    FILE* file = fopen(filename, "r");
+    if (!file) {
+        printf("Failed to open file");
+        return NULL;
+    }
+
+    fseek(file, 0, SEEK_END);
+    long length = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    char* content = malloc(length + 1);
+    fread(content, 1, length, file);
+    content[length] = '\0';
+
+    fclose(file);
+    return content;
+}
+
+char* extract_path_data(const char* content) {
+    const char* path_start = strstr(content, "<path");
+    const char* d_start = strstr(path_start, "d=\"") + 3;
+    const char* d_end = strstr(d_start, "\"");
+
+    size_t length = d_end - d_start;
+    char* path_data = malloc(length + 1);
+    strncpy(path_data, d_start, length);
+    path_data[length] = '\0';
+
+    return path_data;
 }
 
 void write_pixel(int x, int y, png_byte cr, png_byte cg, png_byte cb) {
@@ -144,92 +169,185 @@ void write_pixel8(int x, int y, png_byte cr, png_byte cg, png_byte cb) {
     write_pixel(-y, -x, cr, cg, cb);
 }
 
+void bresenham(int i1, int j1, int i2, int j2, png_byte cr, png_byte cg, png_byte cb) {
+    int m, b, P, i, j;
+
+    if(i2 > i1 && j2 >= j1 && j2 - j1 <= i2 - i1) {
+        m = 2 * (j2 - j1);
+        b = 0;
+        write_pixel(i1, j1, cr, cg, cb);
+        j = j1;
+        P = i2 - i1;
+        for(i = i1 + 1; i <= i2; i++) {
+            b += m;
+            if(b >= 0) {
+                j += 1;
+                b -= 2 * P;
+            }
+            write_pixel(i, j, cr, cg, cb);
+        }
+    } else if(j2 > j1 && i2 >= i1 && i2 - i1 <= j2 - j1) {
+        m = 2 * (i2 - i1);
+        b = 0;
+        write_pixel(i1, j1, cr, cg, cb);
+        i = i1;
+        P = j2 - j1;
+        for(j = j1 + 1; j <= j2; j++) {
+            b += m;
+            if(b > P) {
+                i += 1;
+                b -= 2 * P;
+            }
+            write_pixel(i, j, cr, cg, cb);
+        }
+    } else if (i2 > i1 && -j2 >= -j1 && j1 - j2 <= i2 - i1) {
+        m = 2 * (j1 - j2);
+        b = 0;
+        write_pixel(i1, j2, cr, cg, cb);
+        j = j2;
+        P = i2 - i1;
+        for(i = i1 + 1; i <= i2; i++) {
+            b += m;
+            if(b > P) {
+                j--;
+                b -= 2 * P;
+            }
+            write_pixel(i, j, cr, cg, cb);
+        }
+    } else if(j2 < j1 && i2 >= i1 && i2 - i1 <= j1 - j2) {
+        m = 2 * (i2 - i1);
+        b = 0;
+        write_pixel(i1, j1, cr, cg, cb);
+        i = i2;
+        P = j1 - j2;
+        for(j = j2 + 1; j <= j1; j++) {
+            b += m;
+            if (b > P) {
+                i--;
+                b -= 2 * P;
+            }
+            write_pixel(i, j, cr, cg, cb);
+        }
+    }
+}
+
+void process_line_segment(int i1, int j1, int i2, int j2) {
+    if (is_angle_greater_than_180(i1, i2)) {
+        bresenham(i2, j2, i1, j1, 255, 0, 0);
+    } else {
+        bresenham(i1, j1, i2, j2, 255, 0, 0);
+    }
+}
+
+char** split_by_commands(const char* input, int* count) {
+    char** result = malloc(100 * sizeof(char*));
+    if (result == NULL) {
+        return NULL;
+    }
+
+    const char* start = input;
+    int index = 0;
+
+    while (*input) {
+        if (isalpha(*input)) {
+            if (input != start) {
+                int len = input - start;
+                result[index] = malloc((len + 1) * sizeof(char));
+                if (result[index] == NULL) {
+                    return NULL; // memory allocation failed
+                }
+                strncpy(result[index], start, len);
+                result[index][len] = '\0';
+                index++;
+            }
+            start = input;
+        }
+        input++;
+    }
+
+    result[index] = strdup(start);
+    index++;
+
+    *count = index;
+    return result;
+}
+
+void process_file(const char* filename) {
+    char *content = read_file_content(filename);
+    if (!content) {
+        return;
+    }
+
+    char *path_data = extract_path_data(content);
+    free(content);
+
+    int count;
+    char **tokens = split_by_commands(path_data, &count);
+    int start_x, start_y, prev_x, prev_y;
+
+    printf("%s", content);
+
+    for (int i = 0; i < count; i++) {
+        char *token = tokens[i];
+        char cmd = token[0];
+        int x, y;
+
+        switch (cmd) {
+            case 'M':
+                sscanf(token + 1, "%d %d", &x, &y);
+//                x += 22;
+//                y += 50;
+
+                start_x = x;
+                start_y = y;
+
+                prev_x = x;
+                prev_y = y;
+                break;
+
+            case 'L':
+                sscanf(token + 1, "%d %d", &x, &y);
+//                x += 22;
+//                y += 50;
+
+                process_line_segment(prev_x, prev_y, x, y);
+
+                prev_x = x;
+                prev_y = y;
+                break;
+
+            case 'Z':
+                process_line_segment(prev_x, prev_y, start_x, start_y);
+                break;
+        }
+    }
+}
+
 void circle(int R, png_byte cr, png_byte cg, png_byte cb) {
     int i, j, f;
     i = 0;
     j = R;
     f = 5 - 4 * R;
     write_pixel8(i, j, cr, cg, cb);
-    
+
     while (i < j) {
-        if (f >= 0) {
+        if (f > 0) {
             f = f + 8 * i - 8 * j + 20;
             j = j - 1;
         } else {
             f = f + 8 * i + 12;
-            i = i + 1;
         }
+        i = i + 1;
         write_pixel8(i, j, cr, cg, cb);
-    }
-}
-
-void bresenham(int i1, int j1, int i2, int j2, png_byte cr, png_byte cg, png_byte cb) {
-    int m, b, P, i, j;
-
-    if(i2 > i1 && j2 >= j1 && j2 - j1 <= i2 - i1) {
-        printf("przypadek 1\n");
-        m = 2 * (j2 - j1);
-        b = m - (i2 - i1);
-        write_pixel(i1, j1, cr, cg, cb);
-        j = j1;
-        for(i = i1 + 1; i <= i2; i++) {
-            if(b >= 0) {
-                j += 1;
-                b -= 2 * (i2 - i1);
-            }
-            b += m;
-            write_pixel(i, j, cr, cg, cb);
-        }
-    } else if(j2 > j1 && i2 >= i1 && i2 - i1 <= j2 - j1) {
-        printf("przypadek 2\n");
-        m = 2 * (i2 - i1);
-        b = m - (j2 - j1);
-        write_pixel(i1, j1, cr, cg, cb);
-        i = i1;
-        for(j = j1 + 1; j <= j2; j++) {
-            if(b >= 0) {
-                i += 1;
-                b -= 2 * (j2 - j1);
-            }
-            b += m;
-            write_pixel(i, j, cr, cg, cb);
-        }
-    } else if(i1 > i2 && j2 > j1 && j2 - j1 >= i1 - i2) {
-        printf("przypadek 3\n");
-        m = 2 * (i1 - i2);
-        b = m - (j2 - j1);
-        write_pixel(i1, j1, cr, cg, cb);
-        i = i1;
-        for(j = j1 + 1; j <= j2; j++) {
-            if(b >= 0) {
-                i -= 1;
-                b -= 2 * (j2 - j1);
-            }
-            b += m;
-            write_pixel(i, j, cr, cg, cb);
-        }
-    } else if(i1 > i2 && j2 >= j1 && j2 - j1 <= i1 - i2) {
-        printf("przypadek 4\n");
-        m = 2 * (j2 - j1);
-        b = m - (i1 - i2);
-        write_pixel(i1, j1, cr, cg, cb);
-        j = j1;
-        for(i = i1 - 1; i >= i2; i--) {
-            if(b >= 0) {
-                j += 1;
-                b -= 2 * (i1 - i2);
-            }
-            b += m;
-            write_pixel(i, j, cr, cg, cb);
-        }
     }
 }
 
 int main(int argc, char **argv)
 {
 	create_png_file();
-	process_file();
+    circle(200, 155, 0, 0);
+//	process_file("initials.svg");
 	write_png_file(OUT_FILE);
 
-        return 0;
+    return 0;
 }

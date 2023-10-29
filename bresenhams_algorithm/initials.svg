@@ -1,0 +1,57 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+
+<svg width="100%" height="100%" version="1.1"
+    xmlns="http://www.w3.org/2000/svg">
+
+
+<rect style='fill:lightgreen' width='100%' height='100%'/>
+
+<circle cx="110" cy="110" r="110"
+
+transform="translate(10, 10)"
+
+style= "
+    fill: rgb(255,0,255);
+    stroke: navy;
+    stroke-width: 2;
+"
+/>
+
+<path d="
+M 50 10
+L 10 120
+L 33 120
+L 40 100
+L 60 100
+L 67 120
+L 90 120
+Z
+M 50 60
+L 56 80
+L 44 80
+Z
+M 110 10
+L 110 120
+L 130 120
+L 130 72
+L 160 120
+L 180 120
+L 141 58
+L 180 10
+L 160 10
+L 130 50
+L 130 10
+Z"
+
+style= "
+    fill: rgb(30,144,255);
+    stroke: navy;
+    stroke-width: 2;
+"
+
+transform="translate(22, 50)"
+/>
+
+</svg>
