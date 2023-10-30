@@ -114,6 +114,12 @@ void write_png_file(char* file_name)
         fclose(fp);
 }
 
+struct color{
+    png_byte r;
+    png_byte g;
+    png_byte b;
+};
+
 int is_angle_greater_than_180(int i1, int i2) {
     int di = i2 - i1;
 
@@ -160,15 +166,22 @@ void write_pixel(int x, int y, png_byte cr, png_byte cg, png_byte cb) {
     ptr[2] = cb;
 }
 
+struct color get_pixel(int x, int y) {
+    png_byte* row = row_pointers[y];
+    png_byte* ptr = &(row[x*3]);
+    struct color c = {ptr[0], ptr[1], ptr[2]};
+    return c;
+}
+
 void write_pixel8(int m1, int m2, int x, int y, png_byte cr, png_byte cg, png_byte cb) {
-    write_pixel(m1+x, m2+y, cr, cg, cb);
-    write_pixel(m1+y, m2+x, cr, cg, cb);
-    write_pixel(m1+x, m2-y, cr, cg, cb);
-    write_pixel(m1+y, m2-x, cr, cg, cb);
-    write_pixel(m1-x, m2+y, cr, cg, cb);
-    write_pixel(m1-y, m2+x, cr, cg, cb);
-    write_pixel(m1-x, m2-y, cr, cg, cb);
-    write_pixel(m1-y, m2-x, cr, cg, cb);
+    write_pixel(m1 + x, m2 + y, cr, cg, cb);
+    write_pixel(m1 + y, m2 + x, cr, cg, cb);
+    write_pixel(m1 + x, m2 - y, cr, cg, cb);
+    write_pixel(m1 + y, m2 - x, cr, cg, cb);
+    write_pixel(m1 - x, m2 + y, cr, cg, cb);
+    write_pixel(m1 - y, m2 + x, cr, cg, cb);
+    write_pixel(m1 - x, m2 - y, cr, cg, cb);
+    write_pixel(m1 - y, m2 - x, cr, cg, cb);
 }
 
 void bresenham(int i1, int j1, int i2, int j2, png_byte cr, png_byte cg, png_byte cb) {
@@ -287,8 +300,6 @@ void process_file(const char* filename) {
     char **tokens = split_by_commands(path_data, &count);
     int start_x, start_y, prev_x, prev_y;
 
-    printf("%s", content);
-
     for (int i = 0; i < count; i++) {
         char *token = tokens[i];
         char cmd = token[0];
@@ -330,7 +341,7 @@ void circle(int R, png_byte cr, png_byte cg, png_byte cb) {
     i = 0;
     j = R;
     f = 5 - 4 * R;
-    write_pixel8(WIDTH/2, HEIGHT/2, i, 50, cr, cg, cb);
+    write_pixel8(WIDTH/2, HEIGHT/2, i, R, cr, cg, cb);
 
     while (i < j) {
         if (f > 0) {
@@ -344,12 +355,33 @@ void circle(int R, png_byte cr, png_byte cg, png_byte cb) {
     }
 }
 
+void flood_fill(int x, int y, struct color prev_color, png_byte cr, png_byte cg, png_byte cb) {
+    if (x <= 0 || x >= WIDTH || y <= 0 || y >= HEIGHT)
+        return;
+
+    struct color current_color = get_pixel(x, y);
+
+    if (current_color.r != prev_color.r || current_color.g != prev_color.g || current_color.b != prev_color.b)
+        return;
+
+
+    write_pixel(x, y, cr, cg, cb);
+
+    flood_fill(x + 1, y, prev_color, cr, cg, cb);
+    flood_fill(x - 1, y, prev_color, cr, cg, cb);
+    flood_fill(x, y + 1, prev_color, cr, cg, cb);
+    flood_fill(x, y - 1, prev_color, cr, cg, cb);
+}
+
 int main(int argc, char **argv)
 {
 	create_png_file();
     circle(250, 155, 0, 0);
 	process_file("initials.svg");
 	write_png_file(OUT_FILE);
+
+    struct color old_color = get_pixel(200, 200);
+    flood_fill(300, 300, old_color, 255, 255, 255);
 
     return 0;
 }
