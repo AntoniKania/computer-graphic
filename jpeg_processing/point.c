@@ -9,8 +9,9 @@
 const char * input_file;
 const char * output_file;
 const char * filter;
+const char * direction;
 double times;
-
+double percent;
 
 /* we will be using this uninitialized pointer later to store raw, uncompressd image */
 JSAMPARRAY row_pointers = NULL;
@@ -31,29 +32,110 @@ void negate(){
     JSAMPROW row = row_pointers[y];
     for (x=0; x<width; x++) {
       JSAMPROW ptr = &(row[x*3]);
-      printf("Pixel at position [ %d - %d ] \
-	has the following RGB values: \
-	%d - %d - %d\n",
-      x, y, ptr[0], ptr[1], ptr[2]);
-
-      ptr[0] = 0;
-      ptr[1] = ptr[2];
+      ptr[0] = 255 - ptr[0];
+      ptr[1] = 255 - ptr[1];
+	  ptr[2] = 255 - ptr[2];
     }
   }
-}    
+}
 
+JSAMPLE clamp(int x) {
+	if (x > 255) {
+		return 255;
+	}
+	if (x < 0) {
+		return 0;
+	}
+	return x;
+}
+
+void brightness() {
+	  int x, y;
+  if (color_space != JCS_RGB)  return;
+
+  for (y=0; y<height; y++) {
+    JSAMPROW row = row_pointers[y];
+    for (x=0; x<width; x++) {
+      JSAMPROW ptr = &(row[x*3]);
+      ptr[0] = clamp(ptr[0] * (1.0 + percent/100.0));
+      ptr[1] = clamp(ptr[1] * (1.0 + percent/100.0));
+	  ptr[2] = clamp(ptr[2] * (1.0 + percent/100.0));
+    }
+  }
+}
+
+void contrast() {
+	int x, y;
+	if (color_space != JCS_RGB)  return;
+
+  for (y=0; y<height; y++) {
+    JSAMPROW row = row_pointers[y];
+    for (x=0; x<width; x++) {
+      JSAMPROW ptr = &(row[x*3]);
+      ptr[0] = clamp(times * (ptr[0] - 127) + 127);
+      ptr[1] = clamp(times * (ptr[1] - 127) + 127);
+	  ptr[2] = clamp(times * (ptr[2] - 127) + 127);
+    }
+  }
+}
+
+void allocate_memory() {
+	int y;
+	size_t rowbytes = width * num_components;
+	row_pointers = (JSAMPARRAY) malloc(sizeof(j_common_ptr) * height);
+	for (y=0; y<height; y++){
+		row_pointers[y] = (JSAMPROW) malloc(rowbytes);
+	}
+}
+
+void rotate() {
+	printf("rotate");
+	int x, y;
+	JSAMPARRAY old_pointers = row_pointers;
+
+	JDIMENSION temp;
+	temp = width;
+	width = height;
+	height = temp;
+
+	size_t rowbytes = width * num_components;
+	row_pointers = (JSAMPARRAY) malloc(sizeof(j_common_ptr) * height);
+	for (y=0; y<height; y++){
+		row_pointers[y] = (JSAMPROW) malloc(rowbytes);
+	}
+
+	for (y=0; y<height; y++) {
+		JSAMPROW row = row_pointers[y];
+		for (x=0; x<width; x++) {
+			JSAMPROW ptr = &(row[x*3]);
+			JSAMPROW old_row = old_pointers[width - 1 - x];
+			JSAMPROW old_ptr = &(old_row[y*3]);
+			ptr[0] = old_ptr[0];
+			ptr[1] = old_ptr[1];
+			ptr[2] = old_ptr[2];
+		}
+  }
+
+	for (y=0; y<width; y++){
+		free(old_pointers[y]);
+	}
+	free(old_pointers);
+}
 
 void process_file(){
     if(strcmp(filter, "negate") ==0 ){
             negate();
     }
     else if(strcmp(filter, "contrast") ==0 ){
-            printf("wybrano filter contrast :-)\n");
+		contrast();
     }
+	else if (strcmp(filter, "brightness") ==0 ){
+		brightness();
+	}
+	else if (strcmp(filter, "rotate") ==0 ){
+		rotate();
+	}
 }
-
-
-
 
 void abort_(const char * s, ...)
 {
@@ -197,17 +279,21 @@ int main(int argc, char **argv){
   struct arg_file *input_file_arg = arg_file1("i", "input-file", "<input>", "Input JPEG File");
   struct arg_file *output_file_arg = arg_file1("o", "out-file" , "<output>", "Output JPEG File");
   struct arg_str *filter_arg = arg_str1("f", "filter" , "<filter>", "Filter");
+  struct arg_str *direction_arg = arg_str0("d", "direction" , "<direction>", "Direction");
   struct arg_dbl *times_arg = arg_dbl0("t", "times" , "<times>", "Multiplyer");
+  struct arg_dbl *percent_arg = arg_dbl0("p", "percent" , "<percent>", "Percent for brightness");
   struct arg_lit *help = arg_lit0("h","help", "print this help and exit");
   struct arg_end *end = arg_end(10); // maksymalna liczba błędów 10
   
   int nerrors;
-  
-  void *argtable[] = {input_file_arg, output_file_arg, filter_arg, times_arg, help, end};
+
+  void *argtable[] = {input_file_arg, output_file_arg, filter_arg, times_arg, percent_arg, help, end};
   
   if (arg_nullcheck(argtable) != 0) printf("error: insufficient memory\n");
   
   times_arg->dval[0] = 1;
+  percent_arg->dval[0] = 0;
+  direction_arg->sval[0] = "right";
   
   nerrors = arg_parse(argc, argv, argtable);
 
@@ -225,6 +311,8 @@ int main(int argc, char **argv){
      output_file = output_file_arg->filename[0];
      filter = filter_arg->sval[0];
      times = times_arg->dval[0];
+	 percent = percent_arg->dval[0];
+	 direction = direction_arg->sval[0];
   }
   else{
      arg_print_errors(stderr, end, "point");
