@@ -79,17 +79,11 @@ void contrast() {
   }
 }
 
-void allocate_memory() {
-	int y;
-	size_t rowbytes = width * num_components;
-	row_pointers = (JSAMPARRAY) malloc(sizeof(j_common_ptr) * height);
-	for (y=0; y<height; y++){
-		row_pointers[y] = (JSAMPROW) malloc(rowbytes);
-	}
+boolean directionEqualsLeft() {
+	return strcmp(direction, "left") == 0;
 }
 
 void rotate() {
-	printf("rotate");
 	int x, y;
 	JSAMPARRAY old_pointers = row_pointers;
 
@@ -110,6 +104,10 @@ void rotate() {
 			JSAMPROW ptr = &(row[x*3]);
 			JSAMPROW old_row = old_pointers[width - 1 - x];
 			JSAMPROW old_ptr = &(old_row[y*3]);
+			if (directionEqualsLeft()) {
+				old_row = old_pointers[x];
+				old_ptr = &(old_row[(height - 1 - y) * 3]);
+			}
 			ptr[0] = old_ptr[0];
 			ptr[1] = old_ptr[1];
 			ptr[2] = old_ptr[2];
@@ -129,12 +127,12 @@ void process_file(){
     else if(strcmp(filter, "contrast") ==0 ){
 		contrast();
     }
-	else if (strcmp(filter, "brightness") ==0 ){
+    else if (strcmp(filter, "brightness") ==0 ){
 		brightness();
-	}
-	else if (strcmp(filter, "rotate") ==0 ){
+    }
+    else if (strcmp(filter, "rotate") ==0 ){
 		rotate();
-	}
+    }
 }
 
 void abort_(const char * s, ...)
@@ -311,8 +309,8 @@ int main(int argc, char **argv){
      output_file = output_file_arg->filename[0];
      filter = filter_arg->sval[0];
      times = times_arg->dval[0];
-	 percent = percent_arg->dval[0];
-	 direction = direction_arg->sval[0];
+	percent = percent_arg->dval[0];
+	direction = direction_arg->sval[0];
   }
   else{
      arg_print_errors(stderr, end, "point");
