@@ -12,6 +12,7 @@ Window::Window(const char * title, int width, int height){
     title_ = title;
     width_ = width;
     height_ = height;
+    mode_ = 0;
 }
 
 void Window::Initialize(int major_gl_version, int minor_gl_version){
@@ -81,6 +82,7 @@ void Window::InitGlewOrDie(){
 
 void Window::InitModels(){
     triangle_.Initialize();
+    star_.Initialize();
 }
 
 void Window::InitPrograms(){
@@ -99,6 +101,9 @@ void Window::KeyEvent(int key, int /*scancode*/, int action, int /*mods*/){
             case GLFW_KEY_ESCAPE:
                 glfwSetWindowShouldClose(window_, GLFW_TRUE);
             break;
+            case GLFW_KEY_SPACE:
+                mode_ = (mode_ + 1) % 2;
+            break;
             default:
             break;
         }
@@ -108,7 +113,14 @@ void Window::KeyEvent(int key, int /*scancode*/, int action, int /*mods*/){
 void Window::Run(void){
     while (!glfwWindowShouldClose(window_)){
         glClear(GL_COLOR_BUFFER_BIT /*| GL_DEPTH_BUFFER_BIT*/);
-        triangle_.Draw(program_);
+        switch(mode_) {
+            case 0:
+                triangle_.Draw(program_);
+                break;
+            case 1:
+                star_.Draw1(program_);
+                break;
+        }
         glfwSwapBuffers(window_);
         glfwWaitEvents();
     }

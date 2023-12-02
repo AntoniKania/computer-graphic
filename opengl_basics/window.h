@@ -6,6 +6,7 @@
 #include <GLFW/glfw3.h>
 
 #include "triangle.h"
+#include "star.h"
 #include "program.h"
 
 class Window{
@@ -19,10 +20,12 @@ class Window{
  private:
     int width_;
     int height_;
+    int mode_;
     const char* title_;
     GLFWwindow* window_;
 
     Triangle triangle_;
+    Star star_;
 
     Program program_;
 
