@@ -1,14 +1,14 @@
-#ifndef STAR_H
-#define STAR_H
+#ifndef CIRCLE_H
+#define CIRCLE_H
 
 #include <GL/glew.h>
 
 #include "program.h"
 
-class Star{
+class Circle{
  public:
     void Initialize();
-    ~Star();
+    ~Circle();
     void DrawFilled(const Program & program);
     void Draw(const Program & program);
  private:
@@ -17,4 +17,4 @@ class Star{
     GLuint color_buffer_;
 };
 
-#endif // STAR_H
+#endif // CIRCLE_H

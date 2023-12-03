@@ -8,6 +8,7 @@
 #include "triangle.h"
 #include "star.h"
 #include "program.h"
+#include "circle.h"
 
 class Window{
  public:
@@ -26,6 +27,7 @@ class Window{
 
     Triangle triangle_;
     Star star_;
+    Circle circle_;
 
     Program program_;
 

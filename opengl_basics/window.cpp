@@ -83,6 +83,7 @@ void Window::InitGlewOrDie(){
 void Window::InitModels(){
     triangle_.Initialize();
     star_.Initialize();
+    circle_.Initialize();
 }
 
 void Window::InitPrograms(){
@@ -102,7 +103,7 @@ void Window::KeyEvent(int key, int /*scancode*/, int action, int /*mods*/){
                 glfwSetWindowShouldClose(window_, GLFW_TRUE);
             break;
             case GLFW_KEY_SPACE:
-                mode_ = (mode_ + 1) % 2;
+                mode_ = (mode_ + 1) % 3;
             break;
             default:
             break;
@@ -118,7 +119,10 @@ void Window::Run(void){
                 triangle_.Draw(program_);
                 break;
             case 1:
-                star_.Draw1(program_);
+                star_.Draw(program_);
+                break;
+            case 2:
+                circle_.Draw(program_);
                 break;
         }
         glfwSwapBuffers(window_);

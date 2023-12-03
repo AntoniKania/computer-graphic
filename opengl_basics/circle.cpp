@@ -1,37 +1,27 @@
-#include "star.h"
+#include "circle.h"
 
 #include <GL/glew.h>
+#include <cmath>
 
-void Star::Initialize(){
-    const GLfloat kVertices[] = {
-         0.0f,  0.8f, 0.0f, 1.0f,
-         0.17f, 0.2f, 0.0f, 1.0f,
-         0.65f, 0.2f, 0.0f, 1.0f,
-         0.25f, -0.1f, 0.0f, 1.0f,
-         0.4f, -0.8f, 0.0f, 1.0f,
-         0.0f, -0.3f, 0.0f, 1.0f,
-         -0.4f, -0.8f, 0.0f, 1.0f,
-         -0.25f, -0.1f, 0.0f, 1.0f,
-         -0.65f, 0.2f, 0.0f, 1.0f,
-         -0.17f, 0.2f, 0.0f, 1.0f,
-         0.0f,  0.8f, 0.0f, 1.0f
-    };
+void Circle::Initialize(){
+    const int kNumVertices = 32;
+    const float kRadius = 0.8f;
+    GLfloat kVertices[4 * kNumVertices];
+    GLfloat kColors[4 * kNumVertices];
 
-    const GLfloat kColors[] = {
-        1.0f, 0.0f, 0.0f, 1.0f,
-        1.0f, 0.0f, 0.0f, 1.0f,
-        1.0f, 0.0f, 0.0f, 1.0f,
-        1.0f, 0.0f, 0.0f, 1.0f,
-        1.0f, 0.0f, 0.0f, 1.0f,
-        1.0f, 0.0f, 0.0f, 1.0f,
-        1.0f, 0.0f, 0.0f, 1.0f,
-        1.0f, 0.0f, 0.0f, 1.0f,
-        1.0f, 0.0f, 0.0f, 1.0f,
-        1.0f, 0.0f, 0.0f, 1.0f,
-        1.0f, 0.0f, 0.0f, 1.0f
-    };
+    for (int i = 0; i < kNumVertices; ++i) {
+        float angle = 2.0f * M_PI * float(i) / float(kNumVertices);
+        kVertices[4 * i] = cos(angle) * kRadius;
+        kVertices[4 * i + 1] = sin(angle) * kRadius;
+        kVertices[4 * i + 2] = 0.0f;
+        kVertices[4 * i + 3] = 1.0f;
+        kColors[4 * i] = 1.0f;
+        kColors[4 * i + 1] = 0.0f;
+        kColors[4 * i + 2] = 0.0f;
+        kColors[4 * i + 3] = 1.0f;
+    }
 
-
+        // 1.0f, 0.0f, 0.0f, 1.0f,
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);
 
@@ -52,7 +42,7 @@ void Star::Initialize(){
 
 }
 
-Star::~Star(){
+Circle::~Circle(){
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(0);
 
@@ -65,21 +55,21 @@ Star::~Star(){
     glDeleteVertexArrays(1, &vao_);
 }
 
-void Star::DrawFilled(const Program &program){
+void Circle::DrawFilled(const Program &program){
     glUseProgram(program);
     glBindVertexArray(vao_);
 
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 11);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 32);
 
     glBindVertexArray(0);
     glUseProgram(0);
 }
 
-void Star::Draw(const Program &program){
+void Circle::Draw(const Program &program){
     glUseProgram(program);
     glBindVertexArray(vao_);
 
-    glDrawArrays(GL_LINE_STRIP, 0, 11);
+    glDrawArrays(GL_LINE_LOOP, 0, 32);
 
     glBindVertexArray(0);
     glUseProgram(0);

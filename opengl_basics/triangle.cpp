@@ -58,6 +58,4 @@ void Triangle::Draw(const Program &program){
 
     glBindVertexArray(0);
     glUseProgram(0);
-
-
 }
