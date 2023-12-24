@@ -20,6 +20,9 @@ class Cube: public IndexModel, public MovableModel{
     void SlowDown();
     void ToggleAnimated();
     void Right();
+    void Left();
+    void Up();
+    void Down();
  private:
     float angle_;
     float velocity_;

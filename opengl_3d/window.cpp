@@ -128,17 +128,27 @@ void Window::KeyEvent(int key, int /*scancode*/, int action, int /*mods*/){
             case GLFW_KEY_ESCAPE:
                 glfwSetWindowShouldClose(window_, GLFW_TRUE);
             break;
-            case GLFW_KEY_LEFT:
-              cube_.SlowDown();
-            break;
             case GLFW_KEY_RIGHT:
               cube_.Right();
-            break;
+                break;
+            case GLFW_KEY_LEFT:
+                cube_.Left();
+                break;
+            case GLFW_KEY_UP:
+                cube_.Up();
+                break;
+            case GLFW_KEY_DOWN:
+                cube_.Down();
+                break;
             case GLFW_KEY_SPACE:
               cube_.ToggleAnimated();
             break;
             case GLFW_KEY_PAGE_DOWN:
-                view_matrix_.Translate(0, 0, -0.01);
+                view_matrix_.Translate(0, 0, -0.02);
+                SetViewMatrix();
+                break;
+            case GLFW_KEY_PAGE_UP:
+                view_matrix_.Translate(0, 0, 0.02);
                 SetViewMatrix();
                 break;
             default:
@@ -147,14 +157,24 @@ void Window::KeyEvent(int key, int /*scancode*/, int action, int /*mods*/){
     }
     else if(action == GLFW_REPEAT){
         switch (key){
-            case GLFW_KEY_LEFT:
-              cube_.SlowDown();
-            break;
             case GLFW_KEY_RIGHT:
-              cube_.Right();
-            break;
+                cube_.Right();
+                break;
+            case GLFW_KEY_LEFT:
+                cube_.Left();
+                break;
+            case GLFW_KEY_UP:
+                cube_.Up();
+                break;
+            case GLFW_KEY_DOWN:
+                cube_.Down();
+                break;
             case GLFW_KEY_PAGE_DOWN:
-                view_matrix_.Translate(0, 0, -0.01);
+                view_matrix_.Translate(0, 0, -0.02);
+                SetViewMatrix();
+                break;
+            case GLFW_KEY_PAGE_UP:
+                view_matrix_.Translate(0, 0, 0.02);
                 SetViewMatrix();
                 break;
             default:

@@ -36,26 +36,35 @@ void Cube::ToggleAnimated(){
 }
 
 void Cube::Initialize(){
-    const ColorVertex kVertices[8] =
+    const ColorVertex kVertices[] =
     {
-        { { -.5f, -.5f,  .5f, 1.0f }, { 1, 1, 1, 1 } },
-        { { -.5f,  .5f,  .5f, 1.0f }, { 1, 0, 0, 1 } },
-        { {  .5f,  .5f,  .5f, 1.0f }, { 0, 1, 0, 1 } },
-        { {  .5f, -.5f,  .5f, 1.0f }, { 1, 1, 0, 1 } },
-        { { -.5f, -.5f, -.5f, 1.0f }, { 0, 0, 1, 1 } },
-        { { -.5f,  .5f, -.5f, 1.0f }, { 1, 0, 0, 1 } },
-        { {  .5f,  .5f, -.5f, 1.0f }, { 1, 0, 1, 1 } },
-        { {  .5f, -.5f, -.5f, 1.0f }, { 0, 0, 0, 1 } }
+        { { -1.0f, -1.0f,  1.0f, 1.0f }, { 1, 1, 1, 1 } },
+        { { 0, -1.0f,  1.0f, 1.0f }, { 0, 1, 1, 1 } },
+        { { 1.0f, -1.0f,  1.0f, 1.0f }, { 1, 0, 1, 1 } },
+        { { 1.0f, -1.0f,  -1.0f, 1.0f }, { 1, 1, 0, 1 } },
+        { { 1.0f, 0,  -1.0f, 1.0f }, { 0, 1, 1, 1 } },
+        { { 0, 1.0f,  -1.0f, 1.0f }, { 1, 0, 1, 1 } },
+        { { 1.0f, 0,  0, 1.0f }, { 1, 1, 0, 1 } },
+        { { 1.0f, 0,  1.0f, 1.0f }, { 1, 1, 1, 1 } },
+        { { -1.0f, 0,  -1.0f, 1.0f }, { 1, 1, 1, 1 } },
+        { { -1.0f, -1.0f,  -1.0f, 1.0f }, { 1, 1, 1, 1 } },
+        { { -1.0f, 0,  0, 1.0f }, { 1, 1, 1, 1 } },
+        { { -1.0f, 0,  1.0f, 1.0f }, { 1, 1, 1, 1 } }
     };
 
-    const GLuint kIndices[36] =
+    const GLuint kIndices[] =
     {
-      0,1,2,  0,2,3,
-      4,0,3,  4,3,7,
-      4,5,1,  4,1,0,
-      3,2,6,  3,6,7,
-      1,5,6,  1,6,2,
-      7,6,5,  7,5,4
+      2,7,6, 2,6,3, 3,6,4,
+      0,11,1,
+      1,7,2,
+      9,8,10,9,10,0, 0,10,11,
+      3,4,8, 4,5,8, 3,8,9,
+      9,0,3, 3,0,2,
+      11,10,1,
+      1,6,7,
+      10,5,6, 1,10,6,
+      6,5,4,
+      8,5,10
     };
 
 
@@ -88,7 +97,7 @@ void Cube::Draw(const ModelProgram &program) const{
 
     program.SetModelMatrix(model_matrix_);
 
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, 57, GL_UNSIGNED_INT, 0);
 
     glBindVertexArray(0);
     glUseProgram(0);
@@ -98,4 +107,16 @@ void Cube::Draw(const ModelProgram &program) const{
 
 void Cube::Right() {
     model_matrix_.RotateAboutY(4);
+}
+
+void Cube::Left() {
+    model_matrix_.RotateAboutY(-4);
+}
+
+void Cube::Up() {
+    model_matrix_.RotateAboutX(4);
+}
+
+void Cube::Down() {
+    model_matrix_.RotateAboutX(-4);
 }
