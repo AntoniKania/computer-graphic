@@ -41,6 +41,8 @@ class Window{
     void InitGlfwOrDie(int major_gl_version,
                        int minor_gl_version);
     void InitGlewOrDie();
+
+    void SetOrthProjectionMatrx();
 };
 
 

@@ -34,9 +34,7 @@ void Window::Initialize(int major_gl_version, int minor_gl_version){
 
     view_matrix_.Translate(0, 0, -2);
     SetViewMatrix();
-
-    projection_matrix_ = Mat4::CreatePerspectiveProjectionMatrix(60, (float)width_/(float)height_, 0.1f, 100.0f);
-    SetProjectionMatrix();
+    SetOrthProjectionMatrx();
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -117,9 +115,23 @@ void Window::SetProjectionMatrix() const{
 void Window::Resize(int new_width, int new_height){
     width_ = new_width;
     height_ = new_height;
-    projection_matrix_ = Mat4::CreatePerspectiveProjectionMatrix(60, (float)width_/(float)height_, 0.1f, 100.0f);
-    SetProjectionMatrix();
+    SetOrthProjectionMatrx();
+
     glViewport(0, 0, width_, height_);
+}
+
+void Window::SetOrthProjectionMatrx() {
+    float aspect_ratio = width_ / height_;
+    float orthoHeight = 1.0f;
+    float orthoWidth = orthoHeight * aspect_ratio;
+
+    float left_plane = -orthoWidth / 2.0f;
+    float right_plane = orthoWidth / 2.0f;
+    float bottom_plane = -orthoHeight / 2.0f;
+    float top_plane = orthoHeight / 2.0f;
+
+    projection_matrix_ = Mat4::CreateOrthoProjectionMatrix(left_plane, right_plane, bottom_plane, top_plane, 0.1f, 100.0f);
+    SetProjectionMatrix();
 }
 
 void Window::KeyEvent(int key, int /*scancode*/, int action, int /*mods*/){
@@ -186,10 +198,6 @@ void Window::KeyEvent(int key, int /*scancode*/, int action, int /*mods*/){
 void Window::Run(void){
     while (!glfwWindowShouldClose(window_)){
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // clock_t now = clock();
-        // if (last_time_ == 0) last_time_ = now;
-        // cube_.Move((float)(now - last_time_) / CLOCKS_PER_SEC);
-        // last_time_ = now;
 
         cube_.Draw(program_);
         glfwSwapBuffers(window_);

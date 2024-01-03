@@ -116,6 +116,26 @@ Mat4 Mat4::CreatePerspectiveProjectionMatrix(
     return out;
 }
 
+Mat4 Mat4::CreateOrthoProjectionMatrix(
+            float left_plane,
+            float right_plane,
+            float bottom_plane,
+            float top_plane,
+            float near_plane,
+            float far_plane) {
+    Mat4 out(0);
+
+    out.matrix_[0] = 2.0f/(right_plane - left_plane);
+    out.matrix_[3] = -(right_plane + left_plane)/(right_plane - left_plane);
+    out.matrix_[5] = 2.0f/(top_plane - bottom_plane);
+    out.matrix_[7] = -(top_plane + bottom_plane)/(top_plane - bottom_plane);
+    out.matrix_[10] = 2.0f/(far_plane - near_plane);
+    out.matrix_[11] = -(far_plane + near_plane)/(far_plane - near_plane); 
+    out.matrix_[15] = 1.0f;
+
+    return out;
+}
+
 Mat4::Mat4(float val){
     for(int i=0; i<16; i++){
         matrix_[i]=val;
