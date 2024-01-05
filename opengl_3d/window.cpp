@@ -34,7 +34,7 @@ void Window::Initialize(int major_gl_version, int minor_gl_version){
 
     view_matrix_.Translate(0, 0, -2);
     SetViewMatrix();
-    SetOrthProjectionMatrx();
+    SetPerspectiveProjectionMatrix();
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -105,7 +105,7 @@ void Window::SetViewMatrix() const{
     program_.SetViewMatrix(view_matrix_);
 }
 
-void Window::SetProjectionMatrix() const{
+void Window::SetPerspectiveMatrix() const{
     glUseProgram(program_);
     program_.SetProjectionMatrix(projection_matrix_);
 }
@@ -115,13 +115,13 @@ void Window::SetProjectionMatrix() const{
 void Window::Resize(int new_width, int new_height){
     width_ = new_width;
     height_ = new_height;
-    SetOrthProjectionMatrx();
+    SetOrthographicProjectionMatrix();
 
     glViewport(0, 0, width_, height_);
 }
 
-void Window::SetOrthProjectionMatrx() {
-    float aspect_ratio = width_ / height_;
+void Window::SetOrthographicProjectionMatrix() {
+    float aspect_ratio = (float)width_/(float)height_;
     float orthoHeight = 1.0f;
     float orthoWidth = orthoHeight * aspect_ratio;
 
@@ -131,7 +131,12 @@ void Window::SetOrthProjectionMatrx() {
     float top_plane = orthoHeight / 2.0f;
 
     projection_matrix_ = Mat4::CreateOrthoProjectionMatrix(left_plane, right_plane, bottom_plane, top_plane, 0.1f, 100.0f);
-    SetProjectionMatrix();
+    SetPerspectiveMatrix();
+}
+
+void Window::SetPerspectiveProjectionMatrix() {
+    projection_matrix_ = Mat4::CreatePerspectiveProjectionMatrix(60, (float)width_/(float)height_, 0.1f, 100.0f);
+    SetPerspectiveMatrix();
 }
 
 void Window::KeyEvent(int key, int /*scancode*/, int action, int /*mods*/){
@@ -162,6 +167,12 @@ void Window::KeyEvent(int key, int /*scancode*/, int action, int /*mods*/){
             case GLFW_KEY_PAGE_UP:
                 view_matrix_.Translate(0, 0, 0.02);
                 SetViewMatrix();
+                break;
+            case GLFW_KEY_END:
+                SetOrthographicProjectionMatrix();
+                break;
+            case GLFW_KEY_HOME:
+                SetPerspectiveProjectionMatrix();
                 break;
             default:
             break;

@@ -36,13 +36,15 @@ class Window{
     void InitModels();
     void InitPrograms();
     void SetViewMatrix() const;
-    void SetProjectionMatrix() const;
+    void SetPerspectiveMatrix() const;
 
     void InitGlfwOrDie(int major_gl_version,
                        int minor_gl_version);
     void InitGlewOrDie();
 
-    void SetOrthProjectionMatrx();
+    void SetOrthographicProjectionMatrix();
+
+    void SetPerspectiveProjectionMatrix();
 };
 
 
