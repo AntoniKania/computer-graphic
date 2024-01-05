@@ -129,7 +129,7 @@ Mat4 Mat4::CreateOrthoProjectionMatrix(
     out.matrix_[3] = -(right_plane + left_plane)/(right_plane - left_plane);
     out.matrix_[5] = 2.0f/(top_plane - bottom_plane);
     out.matrix_[7] = -(top_plane + bottom_plane)/(top_plane - bottom_plane);
-    out.matrix_[10] = 2.0f/(far_plane - near_plane);
+    out.matrix_[10] = -2.0f/(far_plane - near_plane);
     out.matrix_[11] = -(far_plane + near_plane)/(far_plane - near_plane); 
     out.matrix_[15] = 1.0f;
 
